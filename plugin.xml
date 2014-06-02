@@ -19,7 +19,7 @@
 -->
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-           id="org.apache.cordova.nom.inappbrowser"
+           id="org.nom.inappbrowser"
       version="0.0.1-dev">
 
     <name>InAppBrowser</name>
@@ -40,7 +40,7 @@
         </js-module>
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="InAppBrowser"> 
-                <param name="android-package" value="org.apache.cordova.nom.inappbrowser.InAppBrowser"/>
+                <param name="android-package" value="org.nom.inappbrowser"/>
             </feature>
         </config-file>
 
@@ -73,7 +73,7 @@
         </js-module>
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="InAppBrowser"> 
-                <param name="android-package" value="org.apache.cordova.nom.inappbrowser.InAppBrowser"/>
+                <param name="android-package" value="org.nom.inappbrowser"/>
             </feature>
         </config-file>
 

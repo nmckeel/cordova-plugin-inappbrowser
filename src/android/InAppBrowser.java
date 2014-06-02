@@ -562,11 +562,11 @@ public class InAppBrowser extends CordovaPlugin {
                 // Close button
                 Button close = new Button(cordova.getActivity());
                 RelativeLayout.LayoutParams closeLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-                closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
                 close.setLayoutParams(closeLayoutParams);
                 forward.setContentDescription("Close Button");
                 close.setId(5);
-                //close.setText(buttonLabel);
+                close.setText(buttonLabel);
                 int closeResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
                 Drawable closeIcon = activityRes.getDrawable(closeResId);
                 if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN)
@@ -623,7 +623,7 @@ public class InAppBrowser extends CordovaPlugin {
                 actionButtonContainer.addView(forward);
 
                 // Add the views to our toolbar
-                toolbar.addView(actionButtonContainer);
+                //toolbar.addView(actionButtonContainer);
                 toolbar.addView(edittext);
                 toolbar.addView(close);
 

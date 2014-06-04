@@ -1,5 +1,5 @@
 /*
-       Licensed to the Apache Software Foundation (ASF) under one
+L       Licensed to the Apache Software Foundation (ASF) under one
        or more contributor license agreements.  See the NOTICE file
        distributed with this work for additional information
        regarding copyright ownership.  The ASF licenses this file
@@ -19,11 +19,14 @@
 package org.apache.cordova.inappbrowser;
 
 import android.annotation.SuppressLint;
+
 import org.apache.cordova.inappbrowser.InAppBrowserDialog;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -78,6 +81,8 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String CLOSE_BUTTON_CAPTION = "closebuttoncaption";
     private static final String CLEAR_ALL_CACHE = "clearcache";
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
+    private static final String TOOL_BAR_COLOR = "toolbarcolor";
+    private static final String TOOL_BAR = "toolbar";
 
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
@@ -85,9 +90,11 @@ public class InAppBrowser extends CordovaPlugin {
     private CallbackContext callbackContext;
     private boolean showLocationBar = true;
     private boolean openWindowHidden = false;
-    private String buttonLabel = "Done";
+    private String buttonLabel = "Back";
     private boolean clearAllCache= false;
     private boolean clearSessionCache=false;
+    private String toolBarColor = null;
+    private boolean showToolBar = true;
 
     /**
      * Executes the request and returns PluginResult.
@@ -284,9 +291,16 @@ public class InAppBrowser extends CordovaPlugin {
                 option = new StringTokenizer(features.nextToken(), "=");
                 if (option.hasMoreElements()) {
                     String key = option.nextToken();
-                    if (key.equalsIgnoreCase(CLOSE_BUTTON_CAPTION)) {
+                    if (key.equalsIgnoreCase(CLOSE_BUTTON_CAPTION))
+                    {
                         this.buttonLabel = option.nextToken();
-                    } else {
+                    }
+                    else if(key.equals(TOOL_BAR_COLOR))
+                    {
+                    	this.toolBarColor = option.nextToken();
+                    }
+                    else
+                    {
                         Boolean value = option.nextToken().equals("no") ? Boolean.FALSE : Boolean.TRUE;
                         map.put(key, value);
                     }
@@ -364,6 +378,7 @@ public class InAppBrowser extends CordovaPlugin {
      * Checks to see if it is possible to go back one page in history, then does so.
      */
     private void goBack() {
+    	Log.e("", "You clicked the 'Back' button!");
         if (this.inAppWebView.canGoBack()) {
             this.inAppWebView.goBack();
         }
@@ -419,6 +434,8 @@ public class InAppBrowser extends CordovaPlugin {
         // Determine if we should hide the location bar.
         showLocationBar = true;
         openWindowHidden = false;
+        showToolBar = true;
+        
         if (features != null) {
             Boolean show = features.get(LOCATION);
             if (show != null) {
@@ -437,12 +454,17 @@ public class InAppBrowser extends CordovaPlugin {
                     clearSessionCache = cache.booleanValue();
                 }
             }
+            Boolean toolBar = features.get(TOOL_BAR);
+            if (toolBar != null) {
+                showToolBar = toolBar.booleanValue();
+            }
         }
         
         final CordovaWebView thatWebView = this.webView;
 
         // Create dialog in new thread
         Runnable runnable = new Runnable() {
+        	
             /**
              * Convert our DIP units to Pixels
              *
@@ -465,14 +487,30 @@ public class InAppBrowser extends CordovaPlugin {
                 dialog.setCancelable(true);
                 dialog.setInAppBroswer(getInAppBrowser());
 
-                // Main container layout
+                // Main container layout3
+                
                 LinearLayout main = new LinearLayout(cordova.getActivity());
                 main.setOrientation(LinearLayout.VERTICAL);
 
                 // Toolbar layout
                 RelativeLayout toolbar = new RelativeLayout(cordova.getActivity());
                 //Please, no more black! 
-                toolbar.setBackgroundColor(android.graphics.Color.LTGRAY);
+                if(toolBarColor != null && !toolBarColor.equals(""))
+                {
+                	Integer color = null;
+                	try
+                	{
+                		color = Color.parseColor(toolBarColor);
+                	}
+                	catch(Exception e)
+                	{}
+                	
+                	if(color != null)
+                	{
+                		toolbar.setBackgroundColor(color);//Color.rgb(3, 127, 140));
+                	}
+                }
+                
                 toolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)));
                 toolbar.setPadding(this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2));
                 toolbar.setHorizontalGravity(Gravity.LEFT);
@@ -562,11 +600,12 @@ public class InAppBrowser extends CordovaPlugin {
                 // Close button
                 Button close = new Button(cordova.getActivity());
                 RelativeLayout.LayoutParams closeLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-                closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
                 close.setLayoutParams(closeLayoutParams);
                 forward.setContentDescription("Close Button");
                 close.setId(5);
                 close.setText(buttonLabel);
+                /*
                 int closeResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
                 Drawable closeIcon = activityRes.getDrawable(closeResId);
                 if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN)
@@ -577,6 +616,7 @@ public class InAppBrowser extends CordovaPlugin {
                 {
                     close.setBackground(closeIcon);
                 }
+                */
                 close.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         closeDialog();
@@ -623,12 +663,18 @@ public class InAppBrowser extends CordovaPlugin {
                 actionButtonContainer.addView(forward);
 
                 // Add the views to our toolbar
-                //toolbar.addView(actionButtonContainer);
-                toolbar.addView(edittext);
-                toolbar.addView(close);
+                
+                toolbar.addView(actionButtonContainer);
+               
+                if(showLocationBar)
+                {
+                	toolbar.addView(edittext);
+                }
+                
+               	toolbar.addView(close);
 
                 // Don't add the toolbar if its been disabled
-                if (getShowLocationBar()) {
+                if (showToolBar) {
                     // Add our toolbar to our main view/layout
                     main.addView(toolbar);
                 }
@@ -651,6 +697,8 @@ public class InAppBrowser extends CordovaPlugin {
                 }
             }
         };
+        
+        
         this.cordova.getActivity().runOnUiThread(runnable);
         return "";
     }

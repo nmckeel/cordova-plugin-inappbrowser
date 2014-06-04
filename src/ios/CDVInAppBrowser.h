@@ -59,11 +59,14 @@
 @property (nonatomic, assign) BOOL hidden;
 @property (nonatomic, assign) BOOL disallowoverscroll;
 
+//toolbarcolor
+@property (nonatomic, copy) NSString* toolbarcolor;
+
 + (CDVInAppBrowserOptions*)parseOptions:(NSString*)options;
 
 @end
 
-@interface CDVInAppBrowserViewController : UIViewController <UIWebViewDelegate, CDVScreenOrientationDelegate>{
+@interface CDVInAppBrowserViewController : UIViewController <UIWebViewDelegate>{
     @private
     NSString* _userAgent;
     NSString* _prevUserAgent;
@@ -89,13 +92,8 @@
 - (void)showLocationBar:(BOOL)show;
 - (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title;
+- (void)setToolBarColor:(UIColor *)color;
 
 - (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVInAppBrowserOptions*) browserOptions;
-
-@end
-
-@interface CDVInAppBrowserNavigationController : UINavigationController
-
-@property (nonatomic, weak) id <CDVScreenOrientationDelegate> orientationDelegate;
 
 @end

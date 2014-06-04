@@ -83,6 +83,8 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
     private static final String TOOL_BAR_COLOR = "toolbarcolor";
     private static final String TOOL_BAR = "toolbar";
+    private static final String TOOL_BAR_POSITION = "toolbarposition";
+    private static final String TOOL_BAR_POSITION_TOP = "top";
 
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
@@ -95,6 +97,7 @@ public class InAppBrowser extends CordovaPlugin {
     private boolean clearSessionCache=false;
     private String toolBarColor = null;
     private boolean showToolBar = true;
+    private String toolBarPosition = null;
 
     /**
      * Executes the request and returns PluginResult.
@@ -299,6 +302,10 @@ public class InAppBrowser extends CordovaPlugin {
                     {
                     	this.toolBarColor = option.nextToken();
                     }
+                    else if(key.equals(TOOL_BAR_POSITION))
+                    {
+                    	this.toolBarPosition = option.nextToken();
+                    }
                     else
                     {
                         Boolean value = option.nextToken().equals("no") ? Boolean.FALSE : Boolean.TRUE;
@@ -489,8 +496,8 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // Main container layout3
                 
-                LinearLayout main = new LinearLayout(cordova.getActivity());
-                main.setOrientation(LinearLayout.VERTICAL);
+                RelativeLayout main = new RelativeLayout(cordova.getActivity());
+                //main.setOrientation(LinearLayout.VERTICAL);
 
                 // Toolbar layout
                 RelativeLayout toolbar = new RelativeLayout(cordova.getActivity());
@@ -514,7 +521,7 @@ public class InAppBrowser extends CordovaPlugin {
                 toolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)));
                 toolbar.setPadding(this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2));
                 toolbar.setHorizontalGravity(Gravity.LEFT);
-                toolbar.setVerticalGravity(Gravity.TOP);
+                
 
                 // Action Button Container layout
                 RelativeLayout actionButtonContainer = new RelativeLayout(cordova.getActivity());
@@ -625,7 +632,7 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // WebView
                 inAppWebView = new WebView(cordova.getActivity());
-                inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+                inAppWebView.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
                 inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView));
                 WebViewClient client = new InAppBrowserClient(thatWebView, edittext);
                 inAppWebView.setWebViewClient(client);
@@ -673,15 +680,68 @@ public class InAppBrowser extends CordovaPlugin {
                 
                	toolbar.addView(close);
 
-                // Don't add the toolbar if its been disabled
-                if (showToolBar) {
-                    // Add our toolbar to our main view/layout
-                    main.addView(toolbar);
-                }
+               	//if the toolbar is supposed to go on top, add it to the main view first. Otherwise, add it to the main view last.
+               	//if the toolbar is not to be shown, only add the webView
+               	if(showToolBar)
+               	{
+                   	if(toolBarPosition != null && toolBarPosition.equals(TOOL_BAR_POSITION_TOP) )
+                   	{
+                   		toolbar.setVerticalGravity(Gravity.TOP);
+                   		
+                   		toolbar.setId(7);
+                    	RelativeLayout.LayoutParams toolbarBottomParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44));
+                    	toolbarBottomParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+                    	toolbarBottomParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                    	toolbarBottomParams.setMargins(0, 0, 0, 0);
+                    	
+                    	toolbar.setLayoutParams(toolbarBottomParams);
+                    	
+                   		RelativeLayout.LayoutParams webViewParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                   		webViewParams.addRule(RelativeLayout.BELOW, toolbar.getId());
+                   		webViewParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+                   		webViewParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                   		
+                   		
+                   		inAppWebView.setLayoutParams(webViewParams);
+                   		
+                    	// Add our toolbar to our main view/layout
+                       	main.addView(toolbar);
 
-                // Add our webview to our main view/layout
-                main.addView(inAppWebView);
-
+                    	//Add our webview to our main view/layout
+                    	main.addView(inAppWebView);
+                   	}
+                   	else
+                   	{
+                   		toolbar.setVerticalGravity(Gravity.BOTTOM);
+                   		
+                   		toolbar.setId(7);
+                    	RelativeLayout.LayoutParams toolbarBottomParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44));
+                    	toolbarBottomParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+                    	toolbarBottomParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                    	toolbarBottomParams.setMargins(0, 0, 0, 0);
+                    	
+                    	toolbar.setLayoutParams(toolbarBottomParams);
+                    	
+                   		RelativeLayout.LayoutParams webViewParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                   		webViewParams.addRule(RelativeLayout.ABOVE, toolbar.getId());
+                   		webViewParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+                   		webViewParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                   		
+                   		
+                   		inAppWebView.setLayoutParams(webViewParams);
+                   		
+                    	//Add our webview to our main view/layout
+                    	main.addView(inAppWebView);
+                    	
+                    	// Add our toolbar to our main view/layout
+                       	main.addView(toolbar);
+                   	}
+               	}
+               	else
+               	{
+               		main.addView(inAppWebView);
+               	}
+               	
                 WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
                 lp.copyFrom(dialog.getWindow().getAttributes());
                 lp.width = WindowManager.LayoutParams.MATCH_PARENT;

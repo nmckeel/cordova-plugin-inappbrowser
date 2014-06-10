@@ -29,7 +29,8 @@
 #define    kInAppBrowserToolbarBarPositionBottom @"bottom"
 #define    kInAppBrowserToolbarBarPositionTop @"top"
 
-#define    TOOLBAR_HEIGHT 44.0
+//#define    TOOLBAR_HEIGHT 44.0
+int TOOLBAR_HEIGHT = 50;
 #define    LOCATIONBAR_HEIGHT 21.0
 #define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
@@ -41,6 +42,7 @@
 @end
 
 @implementation CDVInAppBrowser
+
 
 - (CDVInAppBrowser*)initWithWebView:(UIWebView*)theWebView
 {
@@ -476,6 +478,14 @@
         _userAgent = userAgent;
         _prevUserAgent = prevUserAgent;
         _browserOptions = browserOptions;
+        
+        if((browserOptions.toolbarheight != nil))
+        {
+            int height = [browserOptions.toolbarheight isEqual: @"short"] ? 50.0 : [browserOptions.toolbarheight isEqual: @"medium"] ? 100.0 : [browserOptions.toolbarheight isEqual: @"tall"] ? 150.0 : 50.0;
+            
+            TOOLBAR_HEIGHT = height;
+        }
+        
         _webViewDelegate = [[CDVWebViewDelegate alloc] initWithDelegate:self];
         [self createViews];
     }
@@ -490,6 +500,7 @@
     CGRect webViewBounds = self.view.bounds;
     BOOL toolbarIsAtBottom = ![_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop];
     webViewBounds.size.height -= _browserOptions.location ? FOOTER_HEIGHT : TOOLBAR_HEIGHT;
+    
     self.webView = [[UIWebView alloc] initWithFrame:webViewBounds];
     
     self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
@@ -526,6 +537,7 @@
     [self.spinner stopAnimating];
 
     self.closeButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(close)];
+    
     self.closeButton.enabled = YES;
 
     UIBarButtonItem* flexibleSpaceButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
@@ -580,20 +592,55 @@
     self.addressLabel.textAlignment = NSTextAlignmentLeft;
     self.addressLabel.textColor = [UIColor colorWithWhite:1.000 alpha:1.000];
     self.addressLabel.userInteractionEnabled = NO;
+    
 
-    NSString* frontArrowString = NSLocalizedString(@"►", nil); // create arrow from Unicode char
-    self.forwardButton = [[UIBarButtonItem alloc] initWithTitle:frontArrowString style:UIBarButtonItemStylePlain target:self action:@selector(goForward:)];
-    self.forwardButton.enabled = YES;
-    self.forwardButton.imageInsets = UIEdgeInsetsZero;
+    /*
+     self.backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithData:imageData] style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
+    */
+    
+    NSURL *imageURL = [NSURL URLWithString:@"http://cdn1.iconfinder.com/data/icons/musthave/48/Previous.png"];
+    NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
 
-    NSString* backArrowString = NSLocalizedString(@"◄", nil); // create arrow from Unicode char
-    self.backButton = [[UIBarButtonItem alloc] initWithTitle:backArrowString style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btn setFrame:CGRectMake(0.0f, 0.0f, 40.0f, 40.0f)];
+    [btn addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
+    [btn setImage:[UIImage imageWithData:imageData] forState:UIControlStateNormal];
+    UIBarButtonItem *eng_btn = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    self.backButton = eng_btn;
+    
+    
+    /*
+     self.forwardButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithData:forwardImageData] style:UIBarButtonItemStylePlain target:self action:@selector(goForward:)];
+    */
+    
+    NSURL *forwardImageURL = [NSURL URLWithString:@"http://cdn1.iconfinder.com/data/icons/musthave/48/Next.png"];
+    NSData *forwardImageData = [NSData dataWithContentsOfURL:forwardImageURL];
+    
+    UIButton *forwardBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    [forwardBtn setFrame:CGRectMake(0.0f, 0.0f, 40.0f, 40.0f)];
+    [forwardBtn addTarget:self action:@selector(goForward:) forControlEvents:UIControlEventTouchUpInside];
+    [forwardBtn setImage:[UIImage imageWithData:forwardImageData] forState:UIControlStateNormal];
+    UIBarButtonItem *fwd_btn = [[UIBarButtonItem alloc] initWithCustomView:forwardBtn];
+    self.forwardButton = fwd_btn;
+    
+    
     self.backButton.enabled = YES;
     self.backButton.imageInsets = UIEdgeInsetsZero;
 
-    [self.toolbar setItems:@[self.backButton, fixedSpaceButton, self.forwardButton, flexibleSpaceButton, self.closeButton]];
-    // [self.toolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
+    self.forwardButton.enabled = YES;
+    self.forwardButton.imageInsets = UIEdgeInsetsZero;
+    
+    self.titleLabel = [[UILabel alloc] initWithFrame:toolbarFrame];
+    [self.titleLabel setFont:[UIFont boldSystemFontOfSize:40]];
+    [self.titleLabel setBackgroundColor:[UIColor clearColor]];
+    [self.titleLabel setTextColor:[UIColor whiteColor]];
+    [self.titleLabel setText:_browserOptions.toolbartitle];
+    [self.titleLabel setTextAlignment:NSTextAlignmentCenter];
 
+    UIBarButtonItem *title = [[UIBarButtonItem alloc] initWithCustomView:self.titleLabel];
+    
+    [self.toolbar setItems:@[self.backButton, fixedSpaceButton, self.forwardButton, fixedSpaceButton, title, flexibleSpaceButton, self.closeButton]];
+    
     self.view.backgroundColor = [UIColor grayColor];
     [self.view addSubview:self.toolbar];
     [self.view addSubview:self.addressLabel];
@@ -610,12 +657,59 @@
     // the advantage of using UIBarButtonSystemItemDone is the system will localize it for you automatically
     // but, if you want to set this yourself, knock yourself out (we can't set the title for a system Done button, so we have to create a new one)
     self.closeButton = nil;
-    self.closeButton = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStyleBordered target:self action:@selector(close)];
-    self.closeButton.enabled = YES;
-    self.closeButton.tintColor = [UIColor colorWithRed:(211/255.0) green:(211/255.0) blue:(211/255.0) alpha:1];
+    //self.closeButton = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStyleBordered target:self action:@selector(close)];
+    //self.closeButton.enabled = YES;
+    //self.closeButton.tintColor = [UIColor colorWithRed:(211/255.0) green:(211/255.0) blue:(211/255.0) alpha:1];
+    
+    NSURL *closeImgUrl = [NSURL URLWithString:@"http://10.1.10.20:8080/dev/site/demo/resapps/mobile/images/home-button.png"];
+    NSData *closeImageData = [NSData dataWithContentsOfURL:closeImgUrl];
+    /*
+    UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    [closeBtn setFrame:CGRectMake(0.0f, 0.0f, 150.0f, TOOLBAR_HEIGHT)];
+    [closeBtn addTarget:self action:@selector(close) forControlEvents:UIControlEventTouchUpInside];
+    //[closeBtn setImage:[UIImage imageNamed:@"home_button.png"] forState:UIControlStateNormal];
+    [closeBtn setTitle:title forState:UIControlStateNormal];
+    [closeBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [closeBtn setImage:[UIImage imageWithData:closeImageData] forState:UIControlStateNormal];
+    UIBarButtonItem *close_btn = [[UIBarButtonItem alloc] initWithCustomView:closeBtn];
+    self.closeButton = close_btn;
+    */
+    
+    
+    
+    
+    
+    
+    UIButton *closeBtn =  [UIButton buttonWithType:UIButtonTypeCustom];
+    [closeBtn setImage:[UIImage imageWithData:closeImageData] forState:UIControlStateNormal];
+    [closeBtn addTarget:self action:@selector(close)forControlEvents:UIControlEventTouchUpInside];
+    [closeBtn setFrame:CGRectMake(0.0f, 0.0f, 150.0f, TOOLBAR_HEIGHT)];
+    UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0.0f, 0.0f, 150.0f, TOOLBAR_HEIGHT)];
+    [label setFont:[UIFont boldSystemFontOfSize:40]];
+    [label setText:title];
+    label.textAlignment = NSTextAlignmentCenter;
+    [label setTextColor:[UIColor blackColor]];
+    [label setBackgroundColor:[UIColor clearColor]];
+    [closeBtn addSubview:label];
+    UIBarButtonItem *barButton = [[UIBarButtonItem alloc] initWithCustomView:closeBtn];
+    self.closeButton = barButton;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //[self.closeButton setTitle:title];
+    //[self.closeButton setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys: [UIColor blackColor],  UITextAttributeTextColor,nil] forState:UIControlStateNormal];
     
     NSMutableArray* items = [self.toolbar.items mutableCopy];
-    [items replaceObjectAtIndex:4 withObject:self.closeButton];
+
+    int count = [items count];
+    //The 'Done' Button should always be the last item on the toolbar...
+    [items replaceObjectAtIndex: (count-1) withObject:self.closeButton];
     [self.toolbar setItems:items];
 }
 

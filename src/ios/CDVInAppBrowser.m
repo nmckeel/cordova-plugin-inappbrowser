@@ -34,6 +34,8 @@ int TOOLBAR_HEIGHT = 50;
 #define    LOCATIONBAR_HEIGHT 21.0
 #define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
+#define UIColorFromRGB(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
+
 #pragma mark CDVInAppBrowser
 
 @interface CDVInAppBrowser () {
@@ -42,7 +44,6 @@ int TOOLBAR_HEIGHT = 50;
 @end
 
 @implementation CDVInAppBrowser
-
 
 - (CDVInAppBrowser*)initWithWebView:(UIWebView*)theWebView
 {
@@ -200,18 +201,11 @@ int TOOLBAR_HEIGHT = 50;
         self.inAppBrowserViewController.webView.suppressesIncrementalRendering = browserOptions.suppressesincrementalrendering;
     }
     
-    #define UIColorFromRGB(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
     //toolbarColor
     
     if (browserOptions.toolbarcolor != nil)
     {
-        unsigned result = 0;
-        NSScanner *scanner = [NSScanner scannerWithString:browserOptions.toolbarcolor];
-        
-        [scanner setScanLocation:1]; // bypass '#' character
-        [scanner scanHexInt:&result];
-        
-        [self.inAppBrowserViewController setToolBarColor:UIColorFromRGB(result)];
+        [self.inAppBrowserViewController setToolBarColor:UIColorFromRGB([self.inAppBrowserViewController hexStringToInt: browserOptions.toolbarcolor])];
     }
   
     [self.inAppBrowserViewController navigateTo:url];
@@ -598,7 +592,7 @@ int TOOLBAR_HEIGHT = 50;
      self.backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithData:imageData] style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
     */
     
-    NSURL *imageURL = [NSURL URLWithString:@"http://cdn1.iconfinder.com/data/icons/musthave/48/Previous.png"];
+    NSURL *imageURL = [NSURL URLWithString:_browserOptions.backurl];
     NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
 
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -613,7 +607,7 @@ int TOOLBAR_HEIGHT = 50;
      self.forwardButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithData:forwardImageData] style:UIBarButtonItemStylePlain target:self action:@selector(goForward:)];
     */
     
-    NSURL *forwardImageURL = [NSURL URLWithString:@"http://cdn1.iconfinder.com/data/icons/musthave/48/Next.png"];
+    NSURL *forwardImageURL = [NSURL URLWithString:_browserOptions.forwardurl];
     NSData *forwardImageData = [NSData dataWithContentsOfURL:forwardImageURL];
     
     UIButton *forwardBtn = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -661,7 +655,7 @@ int TOOLBAR_HEIGHT = 50;
     //self.closeButton.enabled = YES;
     //self.closeButton.tintColor = [UIColor colorWithRed:(211/255.0) green:(211/255.0) blue:(211/255.0) alpha:1];
     
-    NSURL *closeImgUrl = [NSURL URLWithString:@"http://10.1.10.20:8080/dev/site/demo/resapps/mobile/images/home-button.png"];
+    NSURL *closeImgUrl = [NSURL URLWithString:_browserOptions.closeurl];
     NSData *closeImageData = [NSData dataWithContentsOfURL:closeImgUrl];
     /*
     UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -688,7 +682,13 @@ int TOOLBAR_HEIGHT = 50;
     [label setFont:[UIFont boldSystemFontOfSize:40]];
     [label setText:title];
     label.textAlignment = NSTextAlignmentCenter;
-    [label setTextColor:[UIColor blackColor]];
+    
+    UIColor *textColor = [UIColor whiteColor];
+    if(_browserOptions.closetextcolor != nil)
+    {
+        textColor = UIColorFromRGB([self hexStringToInt:_browserOptions.closetextcolor]);
+    }
+    [label setTextColor:textColor];
     [label setBackgroundColor:[UIColor clearColor]];
     [closeBtn addSubview:label];
     UIBarButtonItem *barButton = [[UIBarButtonItem alloc] initWithCustomView:closeBtn];
@@ -716,6 +716,16 @@ int TOOLBAR_HEIGHT = 50;
 - (void) setToolBarColor:(UIColor*) color
 {
     self.toolbar.tintColor = color;
+}
+
+- (int) hexStringToInt:(NSString*)hexString
+{
+    unsigned result = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexString];
+    [scanner setScanLocation:1];
+    [scanner scanHexInt:&result];
+    
+    return result;
 }
 
 - (void)showLocationBar:(BOOL)show

@@ -34,14 +34,11 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.squareup.okhttp.Connection;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
@@ -92,7 +89,15 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String TOOL_BAR_POSITION_TOP = "top";
     private static final String TOOL_BAR_TITLE = "toolbartitle";
     private static final String TOOL_BAR_HEIGHT = "toolbarheight";
-
+    
+    private static final String BACK_URL = "backurl";
+    private static final String FORWARD_URL = "forwardurl";
+    private static final String TITLE_COLOR = "titlecolor";
+    private static final String CLOSE_URL = "closeUrl";
+    private static final String CLOSE_TEXT_COLOR = "closetextcolor";
+    private static final String ARROW_WIDTH = "arrowwidth";
+    private static final String ARROW_HEIGHT = "arrowheight";
+    
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
     private EditText edittext;
@@ -108,8 +113,17 @@ public class InAppBrowser extends CordovaPlugin {
     private String toolBarPosition = null;
     private Drawable backIcon;
     private Drawable forwardIcon;
+    private Drawable closeIcon;
     private String toolBarTitle;
     private String toolBarHeight;
+    
+    private String backUrl;
+    private String forwardUrl;
+    private String titleColor;
+    private String closeUrl;
+    private String closeTextColor;
+    private String arrowWidth;
+    private String arrowHeight;
     
     /**
      * Executes the request and returns PluginResult.
@@ -132,8 +146,20 @@ public class InAppBrowser extends CordovaPlugin {
             
             Log.d(LOG_TAG, "target = " + target);
             
-            backIcon = drawableFromURL("https://cdn1.iconfinder.com/data/icons/musthave/128/Previous.png");
-            forwardIcon = drawableFromURL("https://cdn1.iconfinder.com/data/icons/musthave/128/Next.png");
+            if(backUrl != null)
+            {
+            	backIcon = DrawableFromURL(backUrl);
+            }
+            
+            if(forwardUrl != null)
+            {
+            	forwardIcon = DrawableFromURL(forwardUrl);
+            }
+            
+            if(closeUrl != null)
+            {
+            	closeIcon = DrawableFromURL(closeUrl);
+            }
             
             this.cordova.getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -329,6 +355,34 @@ public class InAppBrowser extends CordovaPlugin {
                     {
                     	this.toolBarHeight = option.nextToken();
                     }
+                    else if(key.equals(BACK_URL))
+                    {
+                    	this.backUrl = option.nextToken();
+                    }
+                    else if(key.equals(FORWARD_URL))
+                    {
+                    	this.forwardUrl = option.nextToken();
+                    }
+                    else if(key.equals(TITLE_COLOR))
+                    {
+                    	this.titleColor = option.nextToken();
+                    }
+                    else if(key.equals(CLOSE_URL))
+                    {
+                    	this.closeUrl = option.nextToken();
+                    }
+                    else if(key.equals(CLOSE_TEXT_COLOR))
+                    {
+                    	this.closeTextColor = option.nextToken();
+                    }
+                    else if(key.equals(ARROW_WIDTH))
+                    {
+                    	this.arrowWidth = option.nextToken();
+                    }
+                    else if(key.equals(ARROW_HEIGHT))
+                    {
+                    	this.arrowHeight = option.nextToken();
+                    }                    
                     else
                     {
                         Boolean value = option.nextToken().equals("no") ? Boolean.FALSE : Boolean.TRUE;
@@ -571,7 +625,7 @@ public class InAppBrowser extends CordovaPlugin {
                 */
                 Resources activityRes = cordova.getActivity().getResources();
                 int backResId = activityRes.getIdentifier("ic_action_previous_item", "drawable", cordova.getActivity().getPackageName());
-                
+
                 if(backIcon == null)
                 {
                 	backIcon = activityRes.getDrawable(backResId);
@@ -591,9 +645,12 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                 });
 
-                RelativeLayout.LayoutParams backLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                int arrowWidthInt = arrowWidth == null ? LayoutParams.MATCH_PARENT : Integer.valueOf(arrowWidth);
+                int arrowHeightInt = arrowHeight == null ? LayoutParams.MATCH_PARENT : Integer.valueOf(arrowHeight);
+                
+                RelativeLayout.LayoutParams backLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
                 backLayoutParams.addRule(RelativeLayout.ALIGN_LEFT);
-                backLayoutParams.setMarginEnd(25);
+                backLayoutParams.setMarginEnd(100);
                 back.setLayoutParams(backLayoutParams);
                                 
                 // Forward button
@@ -622,7 +679,7 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                 });
 
-                RelativeLayout.LayoutParams forwardLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                RelativeLayout.LayoutParams forwardLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
                 forwardLayoutParams.addRule(RelativeLayout.RIGHT_OF, 2);
                 forward.setLayoutParams(forwardLayoutParams);
                 
@@ -633,7 +690,12 @@ public class InAppBrowser extends CordovaPlugin {
                 	title = new TextView(cordova.getActivity());
                 	title.setText(toolBarTitle);
                 	title.setTextSize(40);
-                	title.setTextColor(Color.WHITE);
+                	
+                	if(titleColor != null)
+                	{
+                		title.setTextColor(Color.parseColor(titleColor));
+                	}
+                	
                 	title.setGravity(Gravity.CENTER);
                 	title.setId(8);
                 }
@@ -663,16 +725,13 @@ public class InAppBrowser extends CordovaPlugin {
                 // Close button
                 Button close = new Button(cordova.getActivity());
                 
-                /*
-				color: #000;
-				background: url( ../images/home-button.png) no-repeat;
-				background-size: 100% 100%;
-				border: none;
-				width: 5em;
-				*/
-                
                 int closeResId = activityRes.getIdentifier("home_button", "drawable", cordova.getActivity().getPackageName());
-                Drawable closeIcon = activityRes.getDrawable(closeResId);
+                
+                if(closeIcon == null)
+                {
+                	closeIcon = activityRes.getDrawable(closeResId);
+                }
+                
                 if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN)
                 {
                     close.setBackgroundDrawable(closeIcon);
@@ -698,6 +757,11 @@ public class InAppBrowser extends CordovaPlugin {
                 close.setGravity(Gravity.CENTER);
                 close.setTextSize(40);
                 close.setTypeface(null, Typeface.BOLD);
+                
+                if(closeTextColor != null)
+                {
+                	close.setTextColor(Color.parseColor(closeTextColor));
+                }
                 
                 // WebView
                 inAppWebView = new WebView(cordova.getActivity());
@@ -1003,7 +1067,7 @@ public class InAppBrowser extends CordovaPlugin {
         }
     }
     
-    public Drawable drawableFromURL(String url)
+    public Drawable DrawableFromURL(String url)
     {
         Drawable x = null;
         HttpURLConnection connection = null;

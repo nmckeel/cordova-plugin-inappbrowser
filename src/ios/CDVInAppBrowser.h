@@ -59,8 +59,15 @@
 @property (nonatomic, assign) BOOL hidden;
 @property (nonatomic, assign) BOOL disallowoverscroll;
 
-//toolbarcolor
+@property (nonatomic, copy) NSString* toolbarheight;
 @property (nonatomic, copy) NSString* toolbarcolor;
+@property (nonatomic, copy) NSString* toolbartitle;
+@property (nonatomic, copy) NSString* backurl;
+@property (nonatomic, copy) NSString* forwardurl;
+@property (nonatomic, copy) NSString* titlelabel;
+@property (nonatomic, copy) NSString* closeurl;
+@property (nonatomic, copy) NSString* closetextcolor;
+
 
 + (CDVInAppBrowserOptions*)parseOptions:(NSString*)options;
 
@@ -87,13 +94,17 @@
 @property (nonatomic, weak) CDVInAppBrowser* navigationDelegate;
 @property (nonatomic) NSURL* currentURL;
 
+@property (nonatomic, strong) IBOutlet UILabel* titleLabel;
+
 - (void)close;
 - (void)navigateTo:(NSURL*)url;
 - (void)showLocationBar:(BOOL)show;
 - (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title;
-- (void)setToolBarColor:(UIColor *)color;
 
 - (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVInAppBrowserOptions*) browserOptions;
+
+- (void) setToolBarColor:(UIColor*) color;
+-(int)hexStringToInt:(NSString*) hexString;
 
 @end

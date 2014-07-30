@@ -35,6 +35,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -145,66 +146,9 @@ public class InAppBrowser extends CordovaPlugin {
             final HashMap<String, Boolean> features = parseFeature(args.optString(2));
             
             Log.d(LOG_TAG, "target = " + target);
-            
-            if(backUrl != null)
-            {
-            	backIcon = DrawableFromURL(backUrl);
-            }
-            
-            if(forwardUrl != null)
-            {
-            	forwardIcon = DrawableFromURL(forwardUrl);
-            }
-            
-            if(closeUrl != null)
-            {
-            	closeIcon = DrawableFromURL(closeUrl);
-            }
-            
-            this.cordova.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    String result = "";
-                    // SELF
-                    if (SELF.equals(target)) {
-                        Log.d(LOG_TAG, "in self");
-                        // load in webview
-                        if (url.startsWith("file://") || url.startsWith("javascript:") 
-                                || Config.isUrlWhiteListed(url)) {
-                            webView.loadUrl(url);
-                        }
-                        //Load the dialer
-                        else if (url.startsWith(WebView.SCHEME_TEL))
-                        {
-                            try {
-                                Intent intent = new Intent(Intent.ACTION_DIAL);
-                                intent.setData(Uri.parse(url));
-                               cordova.getActivity().startActivity(intent);
-                            } catch (android.content.ActivityNotFoundException e) {
-                                LOG.e(LOG_TAG, "Error dialing " + url + ": " + e.toString());
-                            }
-                        }
-                        // load in InAppBrowser
-                        else {
-                        	result = showWebPage(url, features);
-                        }
-                    }
-                    // SYSTEM
-                    else if (SYSTEM.equals(target)) {
-                        Log.d(LOG_TAG, "in system");
-                        result = openExternal(url);
-                    }
-                    // BLANK - or anything else
-                    else {
-                        Log.d(LOG_TAG, "in blank");
-                        result = showWebPage(url, features);
-                    }
-    
-                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, result);
-                    pluginResult.setKeepCallback(true);
-                    callbackContext.sendPluginResult(pluginResult);
-                }
-            });
+
+            IconGetterThread ict = new IconGetterThread(url, target, features, this.cordova.getActivity());
+            ict.start();
         }
         else if (action.equals("close")) {
             closeDialog();
@@ -650,7 +594,7 @@ public class InAppBrowser extends CordovaPlugin {
                 
                 RelativeLayout.LayoutParams backLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
                 backLayoutParams.addRule(RelativeLayout.ALIGN_LEFT);
-                backLayoutParams.setMarginEnd(100);
+                backLayoutParams.setMargins(0, 0, 100, 0);
                 back.setLayoutParams(backLayoutParams);
                                 
                 // Forward button
@@ -1105,5 +1049,86 @@ public class InAppBrowser extends CordovaPlugin {
         	}
         }
         return x;
+    }
+    
+    private class IconGetterThread extends Thread
+    {
+    	private String url;
+    	private String target;
+    	private HashMap<String, Boolean> features;
+    	private Activity activity;
+    	
+    	public IconGetterThread(String url, String target, HashMap<String, Boolean> features, Activity activity)
+    	{
+    		this.url = url;
+    		this.target = target;
+    		this.features = features;
+    		this.activity = activity;
+    	}
+    	
+		@Override
+		public void run()
+		{
+            if(backUrl != null)
+            {
+            	backIcon = DrawableFromURL(backUrl);
+            }
+            
+            if(forwardUrl != null)
+            {
+            	forwardIcon = DrawableFromURL(forwardUrl);
+            }
+            
+            if(closeUrl != null)
+            {
+            	closeIcon = DrawableFromURL(closeUrl);
+            }
+            
+            activity.runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run() {
+                    String result = "";
+                    // SELF
+                    if (SELF.equals(target)) {
+                        Log.d(LOG_TAG, "in self");
+                        // load in webview
+                        if (url.startsWith("file://") || url.startsWith("javascript:") 
+                                || Config.isUrlWhiteListed(url)) {
+                            webView.loadUrl(url);
+                        }
+                        //Load the dialer
+                        else if (url.startsWith(WebView.SCHEME_TEL))
+                        {
+                            try {
+                                Intent intent = new Intent(Intent.ACTION_DIAL);
+                                intent.setData(Uri.parse(url));
+                               cordova.getActivity().startActivity(intent);
+                            } catch (android.content.ActivityNotFoundException e) {
+                                LOG.e(LOG_TAG, "Error dialing " + url + ": " + e.toString());
+                            }
+                        }
+                        // load in InAppBrowser
+                        else {
+                        	result = showWebPage(url, features);
+                        }
+                    }
+                    // SYSTEM
+                    else if (SYSTEM.equals(target)) {
+                        Log.d(LOG_TAG, "in system");
+                        result = openExternal(url);
+                    }
+                    // BLANK - or anything else
+                    else {
+                        Log.d(LOG_TAG, "in blank");
+                        result = showWebPage(url, features);
+                    }
+    
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, result);
+                    pluginResult.setKeepCallback(true);
+                    callbackContext.sendPluginResult(pluginResult);
+                }
+            });
+		}
     }
 }

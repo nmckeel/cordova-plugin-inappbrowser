@@ -67,7 +67,8 @@
 @property (nonatomic, copy) NSString* titlelabel;
 @property (nonatomic, copy) NSString* closeurl;
 @property (nonatomic, copy) NSString* closetextcolor;
-
+@property (nonatomic, copy) NSString* arrowwidth;
+@property (nonatomic, copy) NSString* arrowheight;
 
 + (CDVInAppBrowserOptions*)parseOptions:(NSString*)options;
 

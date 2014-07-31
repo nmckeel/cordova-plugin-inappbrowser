@@ -94,7 +94,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String BACK_URL = "backurl";
     private static final String FORWARD_URL = "forwardurl";
     private static final String TITLE_COLOR = "titlecolor";
-    private static final String CLOSE_URL = "closeUrl";
+    private static final String CLOSE_URL = "closeurl";
     private static final String CLOSE_TEXT_COLOR = "closetextcolor";
     private static final String ARROW_WIDTH = "arrowwidth";
     private static final String ARROW_HEIGHT = "arrowheight";
@@ -410,6 +410,10 @@ public class InAppBrowser extends CordovaPlugin {
         if (this.inAppWebView.canGoBack()) {
             this.inAppWebView.goBack();
         }
+        else
+        {
+        	closeDialog();
+        }
     }
 
     /**
@@ -594,7 +598,8 @@ public class InAppBrowser extends CordovaPlugin {
                 
                 RelativeLayout.LayoutParams backLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
                 backLayoutParams.addRule(RelativeLayout.ALIGN_LEFT);
-                backLayoutParams.setMargins(0, 0, 100, 0);
+                backLayoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
+                backLayoutParams.setMargins(10, 0, 10, 0);
                 back.setLayoutParams(backLayoutParams);
                                 
                 // Forward button
@@ -624,7 +629,9 @@ public class InAppBrowser extends CordovaPlugin {
                 });
 
                 RelativeLayout.LayoutParams forwardLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
+                forwardLayoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
                 forwardLayoutParams.addRule(RelativeLayout.RIGHT_OF, 2);
+                forwardLayoutParams.setMargins(0, 0, 0, 0);
                 forward.setLayoutParams(forwardLayoutParams);
                 
                 // Edit Text Box
@@ -643,28 +650,6 @@ public class InAppBrowser extends CordovaPlugin {
                 	title.setGravity(Gravity.CENTER);
                 	title.setId(8);
                 }
-                
-            	RelativeLayout.LayoutParams textLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-            	textLayoutParams.addRule(RelativeLayout.RIGHT_OF, 1);
-            	textLayoutParams.addRule(RelativeLayout.LEFT_OF, 8);
-                
-                edittext.setLayoutParams(textLayoutParams);
-                edittext.setId(4);
-                edittext.setSingleLine(true);
-                edittext.setText(url);
-                edittext.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
-                edittext.setImeOptions(EditorInfo.IME_ACTION_GO);
-                edittext.setInputType(InputType.TYPE_NULL); // Will not except input... Makes the text NON-EDITABLE
-                edittext.setOnKeyListener(new View.OnKeyListener() {
-                    public boolean onKey(View v, int keyCode, KeyEvent event) {
-                        // If the event is a key-down event on the "enter" button
-                        if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                          navigate(edittext.getText().toString());
-                          return true;
-                        }
-                        return false;
-                    }
-                });
                 
                 // Close button
                 Button close = new Button(cordova.getActivity());
@@ -693,6 +678,8 @@ public class InAppBrowser extends CordovaPlugin {
 
                 RelativeLayout.LayoutParams closeLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
                 closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                closeLayoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
+                closeLayoutParams.setMargins(0, 0, 10, 0);
                                 
                 close.setLayoutParams(closeLayoutParams);
                 forward.setContentDescription("Close Button");
@@ -745,22 +732,46 @@ public class InAppBrowser extends CordovaPlugin {
                 // Add the back and forward buttons to our action button container layout
                 actionButtonContainer.addView(back);
                 actionButtonContainer.addView(forward);
-                if(toolBarTitle != null)
-                {
-                	actionButtonContainer.addView(title);
-                	
-                	RelativeLayout.LayoutParams titleLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, height);
-                	titleLayoutParams.addRule(RelativeLayout.RIGHT_OF, 3);
-
-                	title.setLayoutParams(titleLayoutParams);
-                }
                 
                 // Add the views to our toolbar
-                
                 toolbar.addView(actionButtonContainer);
+                
+                if(toolBarTitle != null)
+                {                	
+                	RelativeLayout.LayoutParams titleLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, height);
+                	titleLayoutParams.addRule(RelativeLayout.RIGHT_OF, 3);
+                	titleLayoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
+                	titleLayoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                	titleLayoutParams.setMargins(30, 0, 30, 0);
+                	//title.setGravity(Gravity.CENTER);
+                	title.setLayoutParams(titleLayoutParams);
+                	actionButtonContainer.addView(title);
+                }
                
                 if(showLocationBar)
                 {
+                	RelativeLayout.LayoutParams textLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                	textLayoutParams.addRule(RelativeLayout.RIGHT_OF, 1);
+                	textLayoutParams.addRule(RelativeLayout.LEFT_OF, 8);
+                    
+                    edittext.setLayoutParams(textLayoutParams);
+                    edittext.setId(4);
+                    edittext.setSingleLine(true);
+                    edittext.setText(url);
+                    edittext.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
+                    edittext.setImeOptions(EditorInfo.IME_ACTION_GO);
+                    edittext.setInputType(InputType.TYPE_NULL); // Will not except input... Makes the text NON-EDITABLE
+                    edittext.setOnKeyListener(new View.OnKeyListener() {
+                        public boolean onKey(View v, int keyCode, KeyEvent event) {
+                            // If the event is a key-down event on the "enter" button
+                            if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                              navigate(edittext.getText().toString());
+                              return true;
+                            }
+                            return false;
+                        }
+                    });
+                    
                 	toolbar.addView(edittext);
                 }
                 

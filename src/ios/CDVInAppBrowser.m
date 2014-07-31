@@ -537,7 +537,7 @@ int TOOLBAR_HEIGHT = 50;
     UIBarButtonItem* flexibleSpaceButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
 
     UIBarButtonItem* fixedSpaceButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
-    fixedSpaceButton.width = 20;
+    fixedSpaceButton.width = 2;
 
     float toolbarY = toolbarIsAtBottom ? self.view.bounds.size.height - TOOLBAR_HEIGHT : 0.0;
     CGRect toolbarFrame = CGRectMake(0.0, toolbarY, self.view.bounds.size.width, TOOLBAR_HEIGHT);
@@ -586,17 +586,31 @@ int TOOLBAR_HEIGHT = 50;
     self.addressLabel.textAlignment = NSTextAlignmentLeft;
     self.addressLabel.textColor = [UIColor colorWithWhite:1.000 alpha:1.000];
     self.addressLabel.userInteractionEnabled = NO;
+
     
 
     /*
      self.backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithData:imageData] style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
     */
     
+    if(_browserOptions.arrowwidth == nil)
+    {
+        _browserOptions.arrowwidth = @"231";
+    }
+    
+    if(_browserOptions.arrowheight == nil )
+    {
+        _browserOptions.arrowheight = @"75";
+    }
+    
+    CGFloat iconHeight =  (CGFloat) [_browserOptions.arrowheight floatValue];
+    CGFloat iconWidth = (CGFloat) [_browserOptions.arrowwidth floatValue];
+    
     NSURL *imageURL = [NSURL URLWithString:_browserOptions.backurl];
     NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
 
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    [btn setFrame:CGRectMake(0.0f, 0.0f, 40.0f, 40.0f)];
+    [btn setFrame:CGRectMake(0.0f, 0.0f, iconWidth, iconHeight)];
     [btn addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
     [btn setImage:[UIImage imageWithData:imageData] forState:UIControlStateNormal];
     UIBarButtonItem *eng_btn = [[UIBarButtonItem alloc] initWithCustomView:btn];
@@ -610,8 +624,9 @@ int TOOLBAR_HEIGHT = 50;
     NSURL *forwardImageURL = [NSURL URLWithString:_browserOptions.forwardurl];
     NSData *forwardImageData = [NSData dataWithContentsOfURL:forwardImageURL];
     
+    
     UIButton *forwardBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    [forwardBtn setFrame:CGRectMake(0.0f, 0.0f, 40.0f, 40.0f)];
+    [forwardBtn setFrame:CGRectMake(0.0f, 0.0f, iconWidth, iconHeight)];
     [forwardBtn addTarget:self action:@selector(goForward:) forControlEvents:UIControlEventTouchUpInside];
     [forwardBtn setImage:[UIImage imageWithData:forwardImageData] forState:UIControlStateNormal];
     UIBarButtonItem *fwd_btn = [[UIBarButtonItem alloc] initWithCustomView:forwardBtn];
@@ -633,9 +648,9 @@ int TOOLBAR_HEIGHT = 50;
 
     UIBarButtonItem *title = [[UIBarButtonItem alloc] initWithCustomView:self.titleLabel];
     
-    [self.toolbar setItems:@[self.backButton, fixedSpaceButton, self.forwardButton, fixedSpaceButton, title, flexibleSpaceButton, self.closeButton]];
+    [self.toolbar setItems:@[self.backButton, fixedSpaceButton, self.forwardButton, flexibleSpaceButton, title, flexibleSpaceButton, self.closeButton]];
     
-    self.view.backgroundColor = [UIColor grayColor];
+    //self.view.backgroundColor = [UIColor grayColor];
     [self.view addSubview:self.toolbar];
     [self.view addSubview:self.addressLabel];
     [self.view addSubview:self.spinner];
@@ -670,15 +685,24 @@ int TOOLBAR_HEIGHT = 50;
     */
     
     
+    if(_browserOptions.arrowwidth == nil)
+    {
+        _browserOptions.arrowwidth = @"231";
+    }
+
+    if(_browserOptions.arrowheight == nil)
+    {
+        _browserOptions.arrowheight = @"75";
+    }
     
-    
-    
+    CGFloat iconHeight =  (CGFloat) [_browserOptions.arrowheight floatValue];
+    CGFloat iconWidth = (CGFloat) [_browserOptions.arrowwidth floatValue];
     
     UIButton *closeBtn =  [UIButton buttonWithType:UIButtonTypeCustom];
     [closeBtn setImage:[UIImage imageWithData:closeImageData] forState:UIControlStateNormal];
     [closeBtn addTarget:self action:@selector(close)forControlEvents:UIControlEventTouchUpInside];
-    [closeBtn setFrame:CGRectMake(0.0f, 0.0f, 150.0f, TOOLBAR_HEIGHT)];
-    UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0.0f, 0.0f, 150.0f, TOOLBAR_HEIGHT)];
+    [closeBtn setFrame:CGRectMake(0.0f, 0.0f, iconWidth, iconHeight)];
+    UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(0.0f, 0.0f, iconWidth, iconHeight)];
     [label setFont:[UIFont boldSystemFontOfSize:40]];
     [label setText:title];
     label.textAlignment = NSTextAlignmentCenter;
@@ -716,6 +740,8 @@ int TOOLBAR_HEIGHT = 50;
 - (void) setToolBarColor:(UIColor*) color
 {
     self.toolbar.tintColor = color;
+    self.view.backgroundColor = color;
+    
 }
 
 - (int) hexStringToInt:(NSString*)hexString
@@ -893,7 +919,14 @@ int TOOLBAR_HEIGHT = 50;
 
 - (void)goBack:(id)sender
 {
-    [self.webView goBack];
+    if(self.webView.canGoBack)
+    {
+        [self.webView goBack];
+    }
+    else
+    {
+        [self close];
+    }
 }
 
 - (void)goForward:(id)sender
@@ -936,7 +969,7 @@ int TOOLBAR_HEIGHT = 50;
     // loading url, start spinner, update back/forward
 
     self.addressLabel.text = NSLocalizedString(@"Loading...", nil);
-    self.backButton.enabled = theWebView.canGoBack;
+    self.backButton.enabled = YES;//theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
 
     [self.spinner startAnimating];
@@ -959,7 +992,7 @@ int TOOLBAR_HEIGHT = 50;
     // update url, stop spinner, update back/forward
 
     self.addressLabel.text = [self.currentURL absoluteString];
-    self.backButton.enabled = theWebView.canGoBack;
+    self.backButton.enabled = YES;//theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
 
     [self.spinner stopAnimating];
@@ -988,7 +1021,7 @@ int TOOLBAR_HEIGHT = 50;
     // log fail message, stop spinner, update back/forward
     NSLog(@"webView:didFailLoadWithError - %ld: %@", (long)error.code, [error localizedDescription]);
 
-    self.backButton.enabled = theWebView.canGoBack;
+    self.backButton.enabled = YES;//theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
     [self.spinner stopAnimating];
 

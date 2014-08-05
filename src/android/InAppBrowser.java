@@ -676,7 +676,7 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                 });
 
-                RelativeLayout.LayoutParams closeLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                RelativeLayout.LayoutParams closeLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
                 closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
                 closeLayoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
                 closeLayoutParams.setMargins(0, 0, 10, 0);

@@ -406,7 +406,6 @@ public class InAppBrowser extends CordovaPlugin {
      * Checks to see if it is possible to go back one page in history, then does so.
      */
     private void goBack() {
-    	Log.e("", "You clicked the 'Back' button!");
         if (this.inAppWebView.canGoBack()) {
             this.inAppWebView.goBack();
         }
@@ -593,8 +592,30 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                 });
 
-                int arrowWidthInt = arrowWidth == null ? LayoutParams.MATCH_PARENT : Integer.valueOf(arrowWidth);
-                int arrowHeightInt = arrowHeight == null ? LayoutParams.MATCH_PARENT : Integer.valueOf(arrowHeight);
+                
+                int arrowWidthInt = LayoutParams.WRAP_CONTENT;
+                int arrowHeightInt = LayoutParams.WRAP_CONTENT;
+                
+                try
+                {
+                	if(arrowWidth != null)
+                	{
+                		arrowWidthInt = dpToPixels(Integer.valueOf(arrowWidth));
+                	}
+                	if(arrowHeight != null)
+                	{
+                		arrowHeightInt = dpToPixels(Integer.valueOf(arrowHeight));
+                	}
+                }
+                catch(Exception e)
+                {
+                	LOG.e(LOG_TAG, "Error setting width and height of toolbar buttons. Did you specify non-numbers in the call to window.open()? The value specified for width was: " + arrowWidth + " and the value specified for height was: " + arrowHeight, e);
+                    arrowWidthInt = LayoutParams.WRAP_CONTENT;
+                    arrowHeightInt = LayoutParams.WRAP_CONTENT;
+                }
+                
+                //int arrowWidthInt = arrowWidth == null ? LayoutParams.MATCH_PARENT : dpToPixels(Integer.valueOf(arrowWidth));
+                //int arrowHeightInt = arrowHeight == null ? LayoutParams.MATCH_PARENT : dpToPixels(Integer.valueOf(arrowHeight));
                 
                 RelativeLayout.LayoutParams backLayoutParams = new RelativeLayout.LayoutParams(arrowWidthInt, arrowHeightInt);
                 backLayoutParams.addRule(RelativeLayout.ALIGN_LEFT);
